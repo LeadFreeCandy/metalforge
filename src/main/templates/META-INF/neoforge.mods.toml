@@ -1,0 +1,36 @@
+license="Apache-2.0"
+issueTrackerURL="https://github.com/LeadFreeCandy/metalforge/issues"
+[[mods]]
+modId="metalforge"
+version="${mod_version}"
+displayName="MetalForge"
+displayURL="https://github.com/LeadFreeCandy/metalforge"
+authors="LeadFreeCandy"
+credits="Metal backend ported from mcopt by Noah Dunnagan (Apache-2.0)"
+description='''Native Apple Metal rendering for Minecraft on NeoForge (Apple Silicon Macs), with smooth frame pacing and exact client-side optimizations that also work on other platforms. Works with Sodium.'''
+[[mixins]]
+config="metalforge.mixins.json"
+[[mixins]]
+config="metalforge.metal.mixins.json"
+[[mixins]]
+config="metalforge.sodium.mixins.json"
+[[accessTransformers]]
+file="META-INF/accesstransformer.cfg"
+[[dependencies.metalforge]]
+    modId="neoforge"
+    type="required"
+    versionRange="[${neo_version},)"
+    ordering="NONE"
+    side="CLIENT"
+[[dependencies.metalforge]]
+    modId="minecraft"
+    type="required"
+    versionRange="${minecraft_version_range}"
+    ordering="NONE"
+    side="CLIENT"
+[[dependencies.metalforge]]
+    modId="sodium"
+    type="optional"
+    versionRange="[0.9.2,)"
+    ordering="NONE"
+    side="CLIENT"

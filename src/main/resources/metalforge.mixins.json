@@ -1,0 +1,27 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.leadfreecandy.metalforge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "io.github.leadfreecandy.metalforge.MixinPlugin",
+  "client": [
+    "infra.ShaderLoaderMixin",
+    "fbo.GlTextureViewMixin",
+    "fbo.GlTextureMixin",
+    "fbo.GlCommandEncoderMixin",
+    "outline.LevelRendererOutlineMixin",
+    "prelude.GameRendererPreludeMixin",
+    "particle_collide.ParticleMixin",
+    "gui_layer.GuiRenderStateMixin",
+    "gui_layer.GuiRenderStateNodeMixin",
+    "gui_sort.GuiRendererSortMixin",
+    "toro_light.LevelRendererToroMixin",
+    "lootr_far.LootrClientTickMixin",
+    "alpha_const.ShaderChunkRendererMixin",
+    "cutout_sort.ChunkBuildBuffersMixin",
+    "cutout_sort.ChunkMeshBufferBuilderAccessor"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

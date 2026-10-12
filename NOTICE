@@ -1,0 +1,21 @@
+MetalForge
+Copyright 2026 LeadFreeCandy
+
+Licensed under the Apache License, Version 2.0 (see LICENSE).
+
+This product contains code from mcopt (https://github.com/noahdunnagan/mcopt):
+
+  mcopt
+  Copyright 2026 Noah Dunnagan
+
+  mcopt, a Minecraft mod, was created by Noah Dunnagan. If you use or redistribute this code, keep this NOTICE with it
+  and credit mcopt (https://github.com/noahdunnagan/mcopt).
+
+  mcopt is licensed under the Apache License, Version 2.0.
+
+The Metal backend (src/main/native/mcmetal.m, mcmetal.h and the io.github.leadfreecandy.metalforge.metal package) is
+ported from mcopt and modified (NeoForge 26.1.2 / GLFW window integration, Sodium on Metal, smooth frame pacing, SDK
+compatibility). Files derived from mcopt say so in their header.
+
+The released jar embeds the LWJGL shaderc and SPIRV-Cross bindings and natives (BSD-3-Clause, see
+src/main/native/LWJGL-LICENSE.txt; shaderc and SPIRV-Cross themselves are Apache-2.0).

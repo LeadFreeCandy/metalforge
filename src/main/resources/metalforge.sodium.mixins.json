@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "io.github.leadfreecandy.metalforge.metal.mixin.sodium",
+  "compatibilityLevel": "JAVA_21",
+  "plugin": "io.github.leadfreecandy.metalforge.metal.mixin.sodium.SodiumPlugin",
+  "client": ["GLRenderDeviceMixin", "ShaderChunkRendererAccessor", "DefaultChunkRendererMixin", "UniformBufferManagerMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

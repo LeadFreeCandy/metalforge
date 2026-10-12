@@ -1,0 +1,21 @@
+name: build
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+jobs:
+  build:
+    # the native Metal library needs macOS + clang; the jar is built where it can include it
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew build --no-configuration-cache
+      - uses: actions/upload-artifact@v4
+        with:
+          name: metalforge-jar
+          path: build/libs/*.jar

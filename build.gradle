@@ -1,0 +1,99 @@
+// MetalForge: a native Apple Metal renderer plus exact client optimizations for Minecraft 26.1.2 on NeoForge.
+// The Metal backend is ported from mcopt (https://github.com/noahdunnagan/mcopt, Apache-2.0; see NOTICE).
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.148'
+}
+
+version = mod_version
+group = mod_group_id
+base { archivesName = "metalforge-${minecraft_version}" }
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
+
+neoForge {
+    version = project.neo_version
+    accessTransformers = files('src/main/resources/META-INF/accesstransformer.cfg')
+    mods {
+        metalforge { sourceSet(sourceSets.main) }
+    }
+    runs {
+        client {
+            client()
+        }
+    }
+}
+
+repositories {
+    exclusiveContent {
+        forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+        filter { includeGroup 'maven.modrinth' }
+    }
+}
+
+// Optional integrations, compiled against but never bundled: their mixins apply only when the mod is installed.
+// Sodium ships its classes as a jar-in-jar, so the inner jar is extracted for compilation.
+configurations { sodiumOuter { transitive = false }; embed { transitive = false } }
+dependencies {
+    sodiumOuter "maven.modrinth:sodium:${sodium_version}"
+    compileOnly "maven.modrinth:lootr:${lootr_version}"
+}
+def sodiumInner = layout.buildDirectory.dir('sodium-inner')
+def extractSodium = tasks.register('extractSodium', Copy) {
+    from({ configurations.sodiumOuter.collect { zipTree(it) } }) { include 'META-INF/jarjar/*.jar'; eachFile { path = name } }
+    includeEmptyDirs = false
+    into sodiumInner
+}
+dependencies {
+    compileOnly files({ fileTree(sodiumInner) { include '*.jar' } }) { builtBy extractSodium }
+}
+
+// GLSL -> SPIR-V (shaderc) -> MSL (SPIRV-Cross): LWJGL bindings matching Minecraft's LWJGL. NeoForge doesn't put plain
+// jar-in-jar libraries on the game's class path, so their classes and arm64 natives are embedded in this jar.
+dependencies {
+    implementation "org.lwjgl:lwjgl-shaderc:${lwjgl_version}"
+    implementation "org.lwjgl:lwjgl-spvc:${lwjgl_version}"
+    runtimeOnly "org.lwjgl:lwjgl-shaderc:${lwjgl_version}:natives-macos-arm64"
+    runtimeOnly "org.lwjgl:lwjgl-spvc:${lwjgl_version}:natives-macos-arm64"
+    embed "org.lwjgl:lwjgl-shaderc:${lwjgl_version}"
+    embed "org.lwjgl:lwjgl-spvc:${lwjgl_version}"
+    embed "org.lwjgl:lwjgl-shaderc:${lwjgl_version}:natives-macos-arm64"
+    embed "org.lwjgl:lwjgl-spvc:${lwjgl_version}:natives-macos-arm64"
+}
+jar {
+    dependsOn configurations.embed
+    from({ configurations.embed.collect { zipTree(it) } }) { exclude 'META-INF/**', 'module-info.class' }
+    from('LICENSE'); from('NOTICE'); from('src/main/native/LWJGL-LICENSE.txt')
+}
+
+// The native Metal backend (macOS only): mcopt's mcmetal.m plus MetalForge's window glue, built with the Xcode Command Line Tools.
+def nativeOut = layout.buildDirectory.dir('natives')
+tasks.register('compileNative', Exec) {
+    def sources = ['mcmetal.m', 'evometal.m'].collect { file("src/main/native/$it") }
+    def output = nativeOut.get().file('natives/libmetalforge.dylib').asFile
+    inputs.files sources, file('src/main/native/mcmetal.h'), file('src/main/native/sdk14compat.h')
+    outputs.file output
+    onlyIf { System.getProperty('os.name').startsWith('Mac') }
+    doFirst { output.parentFile.mkdirs() }
+    commandLine(['clang', '-fno-objc-arc', '-O2', '-Wall', '-Wno-deprecated-declarations', '-arch', 'arm64', '-mmacosx-version-min=14.0', '-dynamiclib',
+        '-install_name', '@rpath/libmetalforge.dylib', '-framework', 'Cocoa', '-framework', 'CoreGraphics', '-framework', 'CoreVideo',
+        '-framework', 'Foundation', '-framework', 'Metal', '-framework', 'QuartzCore', '-o', output] + sources)
+}
+processResources { dependsOn 'compileNative'; from(nativeOut) }
+tasks.named('jar') {
+    doFirst {
+        if (!nativeOut.get().file('natives/libmetalforge.dylib').asFile.exists())
+            throw new GradleException('libmetalforge.dylib was not built: the jar must be built on macOS (Xcode Command Line Tools)')
+    }
+}
+
+var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
+    var replaceProperties = [minecraft_version_range: minecraft_version_range, neo_version: neo_version, mod_version: mod_version]
+    inputs.properties replaceProperties
+    expand replaceProperties
+    from "src/main/templates"
+    into "build/generated/sources/modMetadata"
+}
+sourceSets.main.resources.srcDir generateModMetadata
+neoForge.ideSyncTask generateModMetadata
+
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
